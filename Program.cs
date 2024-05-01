@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Text.Json;
@@ -6,6 +7,7 @@ using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
 using URLShortenerAPI.Models;
 using URLShortenerAPI.Repositories;
+using URLShortenerAPI.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +18,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<UrlContext>();
-builder.Services.AddSingleton<UserContext>();
+builder.Services.AddScoped<UrlContext>();
+builder.Services.AddScoped<UserContext>();
 
-builder.Services.AddSingleton<IUrlRepository, UrlRepository>();
-builder.Services.AddSingleton<IRepository<User>, UserRepository>();
+builder.Services.AddScoped<IUrlRepository, UrlRepository>();
+builder.Services.AddScoped<IRepository<User>, UserRepository>();
+
+builder.Services.AddSingleton<Shortener>();
+
+builder.Services.AddDbContext<UrlContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddDbContext<UserContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddCors(options =>
 {

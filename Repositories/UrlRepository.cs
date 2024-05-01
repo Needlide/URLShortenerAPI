@@ -9,11 +9,13 @@ namespace URLShortenerAPI.Repositories
         public void Add(UrlEntry entity)
         {
             context.Add(entity);
+            context.SaveChanges();
         }
 
         public void Delete(UrlEntry entity)
         {
             context.Remove(entity);
+            context.SaveChanges();
         }
 
         public IEnumerable<UrlEntry> GetAll()
@@ -34,6 +36,7 @@ namespace URLShortenerAPI.Repositories
         public void Update(UrlEntry entity)
         {
             context.Update(entity);
+            context.SaveChanges();
         }
     }
 }

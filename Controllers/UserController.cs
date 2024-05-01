@@ -18,7 +18,7 @@ namespace URLShortenerAPI.Controllers
     public class UserController(IRepository<User> repository, UserContext context) : ControllerBase
     {
         [AllowAnonymous]
-        [HttpPost("registration")]
+        [HttpPost("/registration")]
         public IActionResult Registration([FromBody] User user)
         {
             if (!ModelState.IsValid)
@@ -31,8 +31,6 @@ namespace URLShortenerAPI.Controllers
 
                 string jwt = GenerateJwt(user.Login);
 
-                context.SaveChanges();
-
                 return Ok(new { message = "Registered successfully", token = "Bearer " + jwt });
             }
             catch (DbUpdateException) { return StatusCode(500); }
@@ -41,8 +39,7 @@ namespace URLShortenerAPI.Controllers
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
         }
 
-        [AllowAnonymous]
-        [HttpPost("login")]
+        [HttpPost("/login")]
         public IActionResult Login([FromBody] LoginModel user)
         {
             if (!ModelState.IsValid)
@@ -66,6 +63,14 @@ namespace URLShortenerAPI.Controllers
             catch (SaltParseException) { return StatusCode(500); }
             catch (SecurityTokenEncryptionFailedException) { return StatusCode(500); }
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
+        }
+
+        [HttpGet("/urls")]
+        public IActionResult GetUrls([FromBody] LoginModel user)
+        {
+            User? dbUser = repository.GetAll().FirstOrDefault(x => x.Login == user.Login);
+
+            return Ok(dbUser?.UrlEntries);
         }
 
         private static string GenerateJwt(string login)
