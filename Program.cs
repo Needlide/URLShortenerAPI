@@ -1,4 +1,10 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi.Models;
+using System.Net;
+using System.Text.Json;
+using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
+using URLShortenerAPI.Models;
 using URLShortenerAPI.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,8 +19,71 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<UrlContext>();
 builder.Services.AddSingleton<UserContext>();
 
-builder.Services.AddSingleton<UrlRepository>();
-builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<IUrlRepository, UrlRepository>();
+builder.Services.AddSingleton<IRepository<User>, UserRepository>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy => { policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); });
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateLifetime = true,
+        ValidateAudience = false,
+        ClockSkew = TimeSpan.Zero,
+        ValidIssuer = "shortenerapi"
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.ContentType = "application/json";
+
+            return context.Response.WriteAsync(JsonSerializer.Serialize(new { error = "You are not authenticated" }));
+        }
+    };
+});
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AuthorizationPolicy", policy => policy.RequireAuthenticatedUser());
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+              new OpenApiSecurityScheme
+              {
+                  Reference = new OpenApiReference
+                  {
+                      Type = ReferenceType.SecurityScheme,
+                      Id = "Bearer"
+                  }
+              },
+              Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -26,6 +95,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
