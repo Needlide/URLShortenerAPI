@@ -39,6 +39,7 @@ namespace URLShortenerAPI.Controllers
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
         }
 
+        [AllowAnonymous]
         [HttpPost("/login")]
         public IActionResult Login([FromBody] LoginModel user)
         {
