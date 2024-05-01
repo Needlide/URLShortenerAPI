@@ -18,5 +18,7 @@ namespace URLShortenerAPI.Models
 
         [Required]
         public string Password { get; set; }
+
+        public ICollection<UrlEntry> UrlEntries { get; set; }
     }
 }

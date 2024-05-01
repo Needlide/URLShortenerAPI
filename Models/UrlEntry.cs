@@ -14,5 +14,11 @@ namespace URLShortenerAPI.Models
 
         [Required]
         public string ShortenedUrl { get; set; }
+
+        [ForeignKey("User")]
+        public int UserId { get; set; } // created by
+
+        [Required]
+        public DateTime CreatedDate { get; } = DateTime.UtcNow;
     }
 }
