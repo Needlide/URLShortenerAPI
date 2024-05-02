@@ -56,7 +56,7 @@ namespace URLShortenerAPI.Controllers
         }
 
         [HttpPost("/add")]
-        public IActionResult Add([FromBody] string url)
+        public IActionResult Add([FromBody] SimpleUrl url)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -65,11 +65,11 @@ namespace URLShortenerAPI.Controllers
                 return BadRequest("Problem with token. Try to login again");
             }
 
-            string protocol = url.Split(':')[0] + "://";
+            string protocol = url.Url.Split(':')[0] + "://";
 
-            string domain = DomainExtractor.ExtractDomain(url);
+            string domain = DomainExtractor.ExtractDomain(url.Url);
 
-            string path = url[(protocol.Length + domain.Length)..];
+            string path = url.Url[(protocol.Length + domain.Length)..];
 
             StringBuilder shortUrl = new(protocol);
 
@@ -82,7 +82,7 @@ namespace URLShortenerAPI.Controllers
 
             shortUrl.Append(shortPath);
 
-            repository.Add(new UrlEntry { OriginalUrl = url, ShortenedUrl = shortUrl.ToString(), UserId = Convert.ToInt32(userIdClaim.Value) });
+            repository.Add(new UrlEntry { OriginalUrl = url.Url, ShortenedUrl = shortUrl.ToString(), UserId = Convert.ToInt32(userIdClaim.Value) });
 
             return Ok("Added successfully");
         }
