@@ -62,6 +62,7 @@ namespace URLShortenerAPI.Controllers
                 return Ok(new { message = "Login successful", token = "Bearer " + jwt });
             }
             catch (ArgumentException ex) { return BadRequest(ex); }
+            catch (InvalidOperationException ex) { return StatusCode(500); }
             catch (SaltParseException) { return StatusCode(500); }
             catch (SecurityTokenEncryptionFailedException) { return StatusCode(500); }
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
@@ -75,13 +76,16 @@ namespace URLShortenerAPI.Controllers
             return Ok(dbUser?.UrlEntries);
         }
 
-        private static string GenerateJwt(string login)
+        private string GenerateJwt(string login)
         {
+            int userId = repository.GetAll().First(x => x.Login == login).Id;
+
             SecurityTokenDescriptor descriptor = new()
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new(ClaimTypes.Name, login)
+                    new(ClaimTypes.Name, login),
+                    new(ClaimTypes.NameIdentifier, userId.ToString()),
                 }),
                 Expires = DateTime.UtcNow.AddHours(2),
                 Issuer = "shortenerapi",

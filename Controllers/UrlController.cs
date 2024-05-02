@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text;
 using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
@@ -36,6 +37,18 @@ namespace URLShortenerAPI.Controllers
         [HttpDelete("/delete")]
         public IActionResult Delete([FromBody] UrlEntry url)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return BadRequest("Problem with token. Try to login again");
+            }
+
+            if (userIdClaim.Value != url.UserId.ToString())
+            {
+                return Unauthorized("You are not authorized to delete this record");
+            }
+
             repository.Delete(url);
 
             return Ok("Deleted successfully");
@@ -57,7 +70,7 @@ namespace URLShortenerAPI.Controllers
 
             Random random = new();
 
-            string shortPath = shortener.GenerateShortString(path.GetHashCode() + random.Next(10, 1000));
+            string shortPath = shortener.GenerateShortString(path.GetHashCode() + random.Next(10, 100));
 
             shortUrl.Append(shortPath);
 
