@@ -35,19 +35,20 @@ namespace URLShortenerAPI.Controllers
         }
 
         [HttpDelete("/delete")]
-        public IActionResult Delete([FromBody] UrlEntry url)
+        public IActionResult Delete([FromQuery] int urlId)
         {
+            var url = repository.GetById(urlId);
+
+            if (url == null)
+                return BadRequest("Item with such ID wasn't found");
+
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
             if (userIdClaim == null)
-            {
                 return BadRequest("Problem with token. Try to login again");
-            }
 
             if (userIdClaim.Value != url.UserId.ToString())
-            {
                 return Unauthorized("You are not authorized to delete this record");
-            }
 
             repository.Delete(url);
 
