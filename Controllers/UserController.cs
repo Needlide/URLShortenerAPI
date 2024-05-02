@@ -68,6 +68,28 @@ namespace URLShortenerAPI.Controllers
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
         }
 
+        [HttpGet("/getRole")]
+        public IActionResult GetUser()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return BadRequest("Problem with token. Try to login again");
+            }
+
+            try
+            {
+                User? dbUser = repository.GetAll().FirstOrDefault(x => x.Id.ToString() == userIdClaim.Value);
+
+                if (dbUser == null)
+                    return BadRequest("User doesn't exist");
+
+                return Ok(dbUser.Role);
+            }
+            catch (ArgumentException ex) { return BadRequest(ex); }
+        }
+
         private string GenerateJwt(string login)
         {
             int userId = repository.GetAll().First(x => x.Login == login).Id;
