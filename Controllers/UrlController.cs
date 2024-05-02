@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
 using URLShortenerAPI.Models;
@@ -16,10 +17,17 @@ namespace URLShortenerAPI.Controllers
         [HttpGet("/all")]
         public IActionResult GetAll()
         {
-            return Ok(repository.GetAll());
+            var entries = repository.GetAll().Select(entry => new UrlEntryDto
+            {
+                Id = entry.Id,
+                OriginalUrl = entry.OriginalUrl,
+                ShortenedUrl = entry.ShortenedUrl,
+            }).ToList();
+
+            return Ok(entries);
         }
 
-        [HttpGet("/info")]
+        [HttpPost("/info")]
         public IActionResult Get([FromBody] int id)
         {
             return Ok(repository.GetById(id));
@@ -36,9 +44,24 @@ namespace URLShortenerAPI.Controllers
         [HttpPost("/add")]
         public IActionResult Add([FromBody] LongUrl url)
         {
-            string shortUrl = url.Url.Split('/')[0] + url.Url.Split('/')[1] + url.Url.Split('/')[2] + shortener.GenerateShortString(Convert.ToInt32(url.Url.Split('/')[3]));
+            string protocol = url.Url.Split(':')[0] + "://";
 
-            repository.Add(new UrlEntry { OriginalUrl = url.Url, ShortenedUrl = shortUrl, UserId = url.UserId });
+            string domain = DomainExtractor.ExtractDomain(url.Url);
+
+            string path = url.Url[(protocol.Length + domain.Length)..];
+
+            StringBuilder shortUrl = new(protocol);
+
+            shortUrl.Append(domain);
+            shortUrl.Append('/');
+
+            Random random = new();
+
+            string shortPath = shortener.GenerateShortString(path.GetHashCode() + random.Next(10, 1000));
+
+            shortUrl.Append(shortPath);
+
+            repository.Add(new UrlEntry { OriginalUrl = url.Url, ShortenedUrl = shortUrl.ToString(), UserId = url.UserId });
 
             return Ok("Added successfully");
         }

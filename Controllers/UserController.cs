@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
 using URLShortenerAPI.Models;
@@ -53,7 +54,7 @@ namespace URLShortenerAPI.Controllers
                 if (dbUser == null)
                     return BadRequest("Invalid credentials");
 
-                if (BCryptHash.Hash(user.Password) != dbUser.Password)
+                if (!BCryptHash.Verify(user.Password, dbUser.Password))
                     return BadRequest("Invalid credentials");
 
                 string jwt = GenerateJwt(user.Login);
@@ -82,8 +83,9 @@ namespace URLShortenerAPI.Controllers
                 {
                     new(ClaimTypes.Name, login)
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                Issuer = "shortenerapi"
+                Expires = DateTime.UtcNow.AddHours(2),
+                Issuer = "shortenerapi",
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes("_secret_key_long_key_even_longer_secret_key_")), SecurityAlgorithms.HmacSha256)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

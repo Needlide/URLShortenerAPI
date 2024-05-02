@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using URLShortenerAPI.Abstract;
 using URLShortenerAPI.Database;
@@ -45,8 +47,10 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidateLifetime = true,
         ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
-        ValidIssuer = "shortenerapi"
+        ValidIssuer = "shortenerapi",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("_secret_key_long_key_even_longer_secret_key_"))
     };
     options.Events = new JwtBearerEvents
     {
