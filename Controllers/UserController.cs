@@ -20,7 +20,7 @@ namespace URLShortenerAPI.Controllers
     {
         [AllowAnonymous]
         [HttpPost("/registration")]
-        public IActionResult Registration([FromBody] User user)
+        public IActionResult Registration([FromBody] RegistrationModel user)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -28,7 +28,7 @@ namespace URLShortenerAPI.Controllers
             {
                 user.Password = BCryptHash.Hash(user.Password);
 
-                repository.Add(user);
+                repository.Add(new User { Login = user.Login, Password = user.Password, Role = user.Role });
 
                 string jwt = GenerateJwt(user.Login);
 
