@@ -85,5 +85,20 @@ namespace URLShortenerAPI.Controllers
 
             return Ok("Added successfully");
         }
+
+        [HttpGet("/getUsers")]
+        public IActionResult GetUsersUrls()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return BadRequest("Problem with token. Try to login again");
+            }
+
+            var usersUrls = repository.GetAll().Where(x => x.UserId == Convert.ToInt32(userIdClaim.Value)).ToList();
+
+            return Ok(usersUrls);
+        }
     }
 }

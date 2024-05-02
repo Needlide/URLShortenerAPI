@@ -68,21 +68,6 @@ namespace URLShortenerAPI.Controllers
             catch (Exception) { return StatusCode(500, "An unexpected error occured."); }
         }
 
-        [HttpGet("/urls")]
-        public IActionResult GetUrls()
-        {
-            var userLoginClaim = User.FindFirst(ClaimTypes.Name);
-
-            if (userLoginClaim == null)
-            {
-                return BadRequest("Problem with token. Try to login again");
-            }
-
-            User? dbUser = repository.GetAll().FirstOrDefault(x => x.Login == userLoginClaim.Value);
-
-            return Ok(dbUser?.UrlEntries);
-        }
-
         private string GenerateJwt(string login)
         {
             int userId = repository.GetAll().First(x => x.Login == login).Id;
