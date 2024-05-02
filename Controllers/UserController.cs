@@ -69,9 +69,16 @@ namespace URLShortenerAPI.Controllers
         }
 
         [HttpGet("/urls")]
-        public IActionResult GetUrls([FromBody] LoginModel user)
+        public IActionResult GetUrls()
         {
-            User? dbUser = repository.GetAll().FirstOrDefault(x => x.Login == user.Login);
+            var userLoginClaim = User.FindFirst(ClaimTypes.Name);
+
+            if (userLoginClaim == null)
+            {
+                return BadRequest("Problem with token. Try to login again");
+            }
+
+            User? dbUser = repository.GetAll().FirstOrDefault(x => x.Login == userLoginClaim.Value);
 
             return Ok(dbUser?.UrlEntries);
         }
